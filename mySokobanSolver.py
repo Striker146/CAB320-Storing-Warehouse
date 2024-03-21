@@ -46,6 +46,34 @@ def my_team():
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class Corner:
+    def __init__(self, wall_1, wall_2):
+        self.wall_1 = wall_1
+        self.wall_2 = wall_2
+        diff = (wall_1[0] - wall_2[0], wall_1[1] - wall_2[1])
+        self.corner_1 = [wall_1[0] - diff[0], wall_1[1]]
+        self.corner_2 = [wall_1[0], wall_1[1] - diff[1]]
+
+    def __str__(self):
+        return f"[{str(self.wall_1)}, {str(self.wall_2)}], [{str(self.corner_1), str(self.corner_2)}]]"
+    
+    def __repr__(self) -> str:
+        return f"[{str(self.wall_1)}, {str(self.wall_2)} | {str(self.corner_1), str(self.corner_2)}]"
+
+def corner_comparator(wall_1, wall_2):
+    if 1 == abs(wall_1[0] - wall_2[0]) and 1 == abs(wall_1[1] - wall_2[1]) :
+        return True
+    return False
+
+def get_corner_walls(warehouse):
+    corner_pairs = []
+    for wall_1 in warehouse.walls:
+        for wall_2 in warehouse.walls:
+            if corner_comparator(wall_1, wall_2):
+                corner_pairs.append(Corner(wall_1, wall_2))
+    print(corner_pairs)
+    return corner_pairs
+
 
 
 def taboo_cells(warehouse):
@@ -73,8 +101,11 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"    
-    raise NotImplementedError()
+    ##         "INSERT YOUR CODE HERE"
+    taboo = ''
+    corner_walls = get_corner_walls(warehouse)
+
+    return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -172,5 +203,10 @@ def solve_weighted_sokoban(warehouse):
     raise NotImplementedError()
 
 
+if "__main__" == __name__:
+    wh = sokoban.Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    print(wh)   # this calls    wh.__str__()
+    taboo_cells(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
