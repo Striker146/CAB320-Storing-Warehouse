@@ -232,6 +232,7 @@ class Warehouse:
 if __name__ == "__main__":
     wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
+    
 
     print(wh)   # this calls    wh.__str__()
 
