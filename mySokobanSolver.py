@@ -42,7 +42,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-    return [(10779566, 'Ryan','Hansen'), (12345678,'Cody', 'Overs')]
+    return [(10779566, 'Ryan','Hansen'), (10779710,'Cody', 'Overs')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class Corner:
