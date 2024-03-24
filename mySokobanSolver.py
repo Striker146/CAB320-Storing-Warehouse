@@ -45,6 +45,18 @@ def my_team():
     return [(10779566, 'Ryan','Hansen'), (10779710,'Cody', 'Overs')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class TouchingWalls:
+    def __init__(self,up = None, right = None, down = None, left = None):
+        self.walls = [up, right, down, left]
+        self.up = up
+        self.right = right
+        self.down = down
+        self.left = left
+
+    def __repr__(self) -> str:
+        return f"[{str(self.wall_1)}, {str(self.wall_2)}]"
+    
+
 class Corner:
     def __init__(self, wall_1, wall_2):
         self.wall_1 = wall_1
@@ -70,15 +82,24 @@ def get_corner_walls(warehouse):
         for wall_2 in warehouse.walls:
             if corner_comparator(wall_1, wall_2):
                 corner_pairs.append(Corner(wall_1, wall_2))
-    print(corner_pairs)
+    #print(corner_pairs)
     return corner_pairs
 
-def get_straight_walls(warehouse):
-    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    for direction in directions:
-        for wall_1 in warehouse.walls:
-            for wall_2 in warehouse.walls:
-            
+def get_touching_walls(warehouse):
+
+    wall_chains = []
+    directions = [(1,0), (0,1)]
+        for direction in directions:
+            while True:
+                while True:
+                    wall_chain = []
+                    for wall in warehouse.walls:
+                        if len(wall_chain == 0)
+        
+
+
+    print(wall_pairs)
+    return wall_pairs
 
 
 
@@ -110,7 +131,7 @@ def taboo_cells(warehouse):
     ##         "INSERT YOUR CODE HERE"
     taboo = ''
     corner_walls = get_corner_walls(warehouse)
-    straight_walls = get_straight_walls(warehouse)
+    straight_walls = get_touching_walls(warehouse)
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
