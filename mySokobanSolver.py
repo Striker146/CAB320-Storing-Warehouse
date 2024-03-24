@@ -73,6 +73,13 @@ def get_corner_walls(warehouse):
     print(corner_pairs)
     return corner_pairs
 
+def get_straight_walls(warehouse):
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    for direction in directions:
+        for wall_1 in warehouse.walls:
+            for wall_2 in warehouse.walls:
+            
+
 
 
 def taboo_cells(warehouse):
@@ -103,7 +110,7 @@ def taboo_cells(warehouse):
     ##         "INSERT YOUR CODE HERE"
     taboo = ''
     corner_walls = get_corner_walls(warehouse)
-
+    straight_walls = get_straight_walls(warehouse)
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
