@@ -70,6 +70,10 @@ class Corners:
             corners.append(corner_pair.corner_2)
         return corners
     
+    def get_wall(self):
+        walls = []
+
+    
 
 class Corner:
     def __init__(self, wall_1, wall_2):
@@ -86,7 +90,7 @@ class Corner:
         return f"[{str(self.wall_1)}, {str(self.wall_2)} | {str(self.corner_1), str(self.corner_2)}]"
 
 def corner_comparator(wall_1, wall_2):
-    if 1 == abs(wall_1[0] - wall_2[0]) and 1 == abs(wall_1[1] - wall_2[1]) :
+    if 1 == abs(wall_1[0] - wall_2[0]) and 1 == abs(wall_1[1] - wall_2[1]):
         return True
     return False
 
@@ -113,7 +117,7 @@ def possible_worker_positions(warehouse):
 
         return possible_positions
 
-def get_corner_walls(warehouse):
+def get_corners(warehouse):
     corner_pairs = []
     for wall_1 in warehouse.walls:
         for wall_2 in warehouse.walls:
@@ -136,7 +140,11 @@ def display_taboo(warehouse, corners):
         display_string = display_string + "\n"
     return display_string
 
+def get_taboo_walls(warehouse, corners):
+    taboo_walls = []
 
+
+    return taboo_walls
 
 def taboo_cells(warehouse):
     '''  
@@ -166,8 +174,10 @@ def taboo_cells(warehouse):
     '''
     ##         "INSERT YOUR CODE HERE"
     taboo = ''
-    corner_walls = get_corner_walls(warehouse)
-    taboo = display_taboo(warehouse, corner_walls)
+    corners = get_corners(warehouse)
+    print(corners.corners)
+    walls = get_taboo_walls(warehouse, corners)
+    taboo = display_taboo(warehouse, corners)
     print(taboo)
     return taboo
 
@@ -269,7 +279,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    wh.load_warehouse("./warehouses/warehouse_01.txt")
     taboo_cells(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
