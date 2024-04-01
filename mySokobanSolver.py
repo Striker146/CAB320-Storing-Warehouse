@@ -31,6 +31,7 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # with these files
 import search 
 import sokoban
+from collections import deque
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -45,63 +46,27 @@ def my_team():
     return [(10779566, 'Ryan','Hansen'), (10779710,'Cody', 'Overs')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TouchingWalls:
-    def __init__(self,up = None, right = None, down = None, left = None):
-        self.walls = [up, right, down, left]
-        self.up = up
-        self.right = right
-        self.down = down
-        self.left = left
+def possible_worker_positions(warehouse):
+    # Define movement offsets for up, down, left, and right
+    movements = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
-    def __repr__(self) -> str:
-        return f"[{str(self.wall_1)}, {str(self.wall_2)}]"
-    
+    visited = set()
+    queue = deque([(warehouse.worker[0], warehouse.worker[1])])
+    possible_positions = set()
 
-class Corner:
-    def __init__(self, wall_1, wall_2):
-        self.wall_1 = wall_1
-        self.wall_2 = wall_2
-        diff = (wall_1[0] - wall_2[0], wall_1[1] - wall_2[1])
-        self.corner_1 = [wall_1[0] - diff[0], wall_1[1]]
-        self.corner_2 = [wall_1[0], wall_1[1] - diff[1]]
+    while queue:
+        x, y = queue.popleft()
+        if (x, y) in visited:
+            continue
+        visited.add((x, y))
+        possible_positions.add((x, y))
+        for dx, dy in movements:
+            new_x, new_y = x + dx, y + dy
+            # Check if the new position is within the bounds of the warehouse and not a wall
+            if (new_x, new_y) not in warehouse.walls and (new_x, new_y) not in visited:
+                queue.append((new_x, new_y))
 
-    def __str__(self):
-        return f"[{str(self.wall_1)}, {str(self.wall_2)}], [{str(self.corner_1), str(self.corner_2)}]]"
-    
-    def __repr__(self) -> str:
-        return f"[{str(self.wall_1)}, {str(self.wall_2)} | {str(self.corner_1), str(self.corner_2)}]"
-
-def corner_comparator(wall_1, wall_2):
-    if 1 == abs(wall_1[0] - wall_2[0]) and 1 == abs(wall_1[1] - wall_2[1]) :
-        return True
-    return False
-
-def get_corner_walls(warehouse):
-    corner_pairs = []
-    for wall_1 in warehouse.walls:
-        for wall_2 in warehouse.walls:
-            if corner_comparator(wall_1, wall_2):
-                corner_pairs.append(Corner(wall_1, wall_2))
-    #print(corner_pairs)
-    return corner_pairs
-
-def get_touching_walls(warehouse):
-
-    wall_chains = []
-    directions = [(1,0), (0,1)]
-        for direction in directions:
-            while True:
-                while True:
-                    wall_chain = []
-                    for wall in warehouse.walls:
-                        if len(wall_chain == 0)
-        
-
-
-    print(wall_pairs)
-    return wall_pairs
-
-
+    return possible_positions
 
 def taboo_cells(warehouse):
     '''  
@@ -127,11 +92,36 @@ def taboo_cells(warehouse):
        a '#' and the taboo cells marked with a 'X'.  
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
+       
     '''
     ##         "INSERT YOUR CODE HERE"
     taboo = ''
-    corner_walls = get_corner_walls(warehouse)
-    straight_walls = get_touching_walls(warehouse)
+    positions = possible_worker_positions(warehouse) # replace this with one of the build functions
+    print(positions)
+    for y in range(warehouse.nrows):
+        for x in range(warehouse.ncols):
+            if (x, y) in warehouse.walls:
+                taboo += '#'  # Wall cell
+            elif (x, y) == warehouse.worker:
+                taboo += '$'  # Target cell
+            elif (x,y) not in positions:
+                taboo += ' '  # Target cell
+            else:
+                adjacent_walls = 0  # Reset adjacent walls count for each empty cell
+                for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+                    # Calculate the position of the adjacent cell
+                    adjacent_cell = (x + dx, y + dy)
+                    # Check if the adjacent cell is a wall by verifying if it's in the warehouse's list of walls
+                    if adjacent_cell in warehouse.walls:
+                        # If the adjacent cell is a wall, increment the adjacent_walls counter
+
+                        adjacent_walls += 1
+
+                        
+                taboo += 'X' if adjacent_walls >= 2 else ' '
+
+        taboo += '\n'
+            
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,6 +224,25 @@ if "__main__" == __name__:
     wh = sokoban.Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
     print(wh)   # this calls    wh.__str__()
-    taboo_cells(wh)
+    print(taboo_cells(wh))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+'''
+            elif x < 0 or x >= warehouse.ncols or y < 0 or y >= warehouse.nrows:
+                taboo += '&'  # Outer cell
+            else:
+                adjacent_walls = 0  # Reset adjacent walls count for each empty cell
+                for dx, dy in adjacent_positions:
+                    # Calculate the position of the adjacent cell
+                    adjacent_cell = (x + dx, y + dy)
+                    # Check if the adjacent cell is a wall by verifying if it's in the warehouse's list of walls
+                    if adjacent_cell in warehouse.walls:
+                        # If the adjacent cell is a wall, increment the adjacent_walls counter
+                        if adjacent_cell[0] >= 0 and adjacent_cell[1] >= 0:
+                            adjacent_walls += 1
+                        else:
+                            print("hello bitch")
+                            adjacent_walls -= 100
+                        
+                taboo += 'X' if adjacent_walls == 2 else ' '
+'''
