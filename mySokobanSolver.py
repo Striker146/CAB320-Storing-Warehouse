@@ -129,7 +129,7 @@ def display_taboo(warehouse, corners):
         for ncol in range(warehouse.ncols):
             if (ncol, nrow) in warehouse.walls:
                 display_string = display_string + "#"
-            elif (ncol, nrow) in corners.corners:
+            elif (ncol, nrow) in corners.corners and (ncol, nrow) in possible_worker_positions(warehouse):
                 display_string = display_string + "X"
             else:
                 display_string = display_string + " "
