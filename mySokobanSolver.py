@@ -135,6 +135,7 @@ def display_taboo(warehouse, corners):
                 display_string = display_string + " "
         display_string = display_string + "\n"
     print(display_string)
+    return display_string
 
 
 
@@ -168,7 +169,7 @@ def taboo_cells(warehouse):
     taboo = ''
     corner_walls = get_corner_walls(warehouse)
     print(corner_walls)
-    display_taboo(warehouse, corner_walls)
+    taboo = display_taboo(warehouse, corner_walls)
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
