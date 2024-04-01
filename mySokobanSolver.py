@@ -134,7 +134,6 @@ def display_taboo(warehouse, corners):
             else:
                 display_string = display_string + " "
         display_string = display_string + "\n"
-    print(display_string)
     return display_string
 
 
@@ -168,8 +167,8 @@ def taboo_cells(warehouse):
     ##         "INSERT YOUR CODE HERE"
     taboo = ''
     corner_walls = get_corner_walls(warehouse)
-    print(corner_walls)
     taboo = display_taboo(warehouse, corner_walls)
+    print(taboo)
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -271,8 +270,7 @@ def solve_weighted_sokoban(warehouse):
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
-    print(wh)   # this calls    wh.__str__()
-    print(taboo_cells(wh))
+    taboo_cells(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 '''
