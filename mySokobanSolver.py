@@ -32,12 +32,6 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 import search 
 import sokoban
 
-def is_corner(warehouse, col, row):
-    return ((col, row - 1) in warehouse.walls and (col - 1, row) in warehouse.walls or 
-        (col, row - 1) in warehouse.walls and (col + 1, row) in warehouse.walls or
-        (col, row + 1) in warehouse.walls and (col - 1, row) in warehouse.walls or
-        (col, row + 1) in warehouse.walls and (col + 1, row) in warehouse.walls)
-
 class WarehouseProblem(search.Problem):
     def __init__(self, warehouse, initial):
         self.warehouse = warehouse
@@ -46,17 +40,13 @@ class WarehouseProblem(search.Problem):
         self.corners = []
         self.worker = initial
 
-
     def result(self, state, action):
         assert action in self.actions(state)
         new_state = tuple(map(sum, zip(state, action)))
         if new_state not in self.explored: # If the cell is previously explored do nothing
             self.explored.append(new_state) 
-            col, row = new_state
-            if ((col, row - 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or 
-                (col, row - 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls or
-                (col, row + 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or
-                (col, row + 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls):
+
+            if self.is_corner(new_state):
                 self.corners.append(new_state)
             
         return new_state
@@ -78,6 +68,24 @@ class WarehouseProblem(search.Problem):
         return (1 <= row < self.warehouse.nrows and
                 1 <= col < self.warehouse.ncols and
                 (col, row) not in self.warehouse.walls)
+    
+    def is_corner(self, state):
+        col, row = state
+        return ((col, row - 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or 
+            (col, row - 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls or
+            (col, row + 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or
+            (col, row + 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls)
+    
+    def values_between(self, min_val, max_val):
+        difference = max_val - min_val
+
+        if difference >= 0:
+            for i in range(min_val + 1, max_val):
+                yield i
+        else:
+            for i in range(max_val + 1, min_val):
+                yield i
+
 
 
 
@@ -122,32 +130,85 @@ def taboo_cells(warehouse):
        and the boxes.  
     '''
     ##         "INSERT YOUR CODE HERE"
+
+    def find_corner_pairs(corners, walls):
+        corner_pairs = []
+
+        for row in range(len(corners)):
+            for col in range(row + 1, len(corners)):
+                corner1 = corners[row]
+                corner2 = corners[col]
+
+                # Check if there is a wall between the corners
+                if not is_wall_between(corner1, corner2, walls):
+                    if (abs(corner1[0] - corner2[0]) > 1) or (abs(corner1[1] - corner2[1]) > 1):
+                        if corner1[0] == corner2[0]:
+                            corner_pairs.append((corner1, corner2))
+                        elif corner1[1] == corner2[1]:
+                            corner_pairs.append((corner1, corner2))
+
+        return corner_pairs
+
+    def is_wall_between(corner1, corner2, walls):
+        if corner1[0] == corner2[0]:  # Same column, check rows
+            min_row = min(corner1[1], corner2[1])
+            max_row = max(corner1[1], corner2[1])
+            for row in range(min_row + 1, max_row):
+                if (corner1[0], row) in walls:
+                    return True
+        elif corner1[1] == corner2[1]:  # Same row, check columns
+            min_col = min(corner1[0], corner2[0])
+            max_col = max(corner1[0], corner2[0])
+            for col in range(min_col + 1, max_col):
+                if (col, corner1[1]) in walls:
+                    return True
+        return False
+    
+    def coordinates_between_corners(corner1, corner2):
+
+        coordinates = []
+        
+        if corner1[0] == corner2[0]:  # Same column
+            min_row = min(corner1[1], corner2[1])
+            max_row = max(corner1[1], corner2[1])
+            for row in range(min_row + 1, max_row):
+                coordinates.append((corner1[0], row))
+        elif corner1[1] == corner2[1]:  # Same row
+            min_col = min(corner1[0], corner2[0])
+            max_col = max(corner1[0], corner2[0])
+            for col in range(min_col + 1, max_col):
+                coordinates.append((col, corner1[1]))
+        
+        return coordinates
+    
+    def return_taboo_walls(corner_pairs):
+        cells = []
+        for pair in corner_pairs:
+            cells += (coordinates_between_corners(pair[0], pair[1]))
+
+        return cells
+
     wh_problem = WarehouseProblem(warehouse, warehouse.worker)
     search.breadth_first_graph_search(wh_problem)
     print(wh_problem.corners)
 
-    corner_pairs = []
-    # Iterate through each corner
-    for i in range(len(wh_problem.corners)):
-        for j in range(i + 1, len(wh_problem.corners)):
-            corner1 = wh_problem.corners[i]
-            corner2 = wh_problem.corners[j]
-            if corner1[0] == corner2[0] or corner1[1] == corner2[1]:
-                corner_pairs.append((corner1, corner2))
-
+    corner_pairs = find_corner_pairs(wh_problem.corners, warehouse.walls)
     print(corner_pairs)
+
+    walls = return_taboo_walls(corner_pairs)
+    print(walls)
+
+
 
     taboo = ''
     for row in range(warehouse.nrows):
         for col in range(warehouse.ncols):
             if (col, row) in warehouse.walls:
                 taboo += '#'
-            elif (col, row) == warehouse.worker:
-                taboo += '@'
- #           elif (col, row) in corner_pairs:
-  #              taboo += 'L'
-            elif (col, row) in wh_problem.explored: 
-                taboo += "."
+            elif (col, row) in walls:
+                taboo += 'o'
+            elif (col, row) in wh_problem.explored and (col, row) in wh_problem.corners: 
+                taboo += "X"
             else:
                 taboo += " "
         taboo += "\n"
@@ -254,7 +315,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
     print(wh)
     print('\n')
     print(taboo_cells(wh))
