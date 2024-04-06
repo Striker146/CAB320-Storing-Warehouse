@@ -31,7 +31,54 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # with these files
 import search 
 import sokoban
-from collections import deque
+
+def is_corner(warehouse, col, row):
+    return ((col, row - 1) in warehouse.walls and (col - 1, row) in warehouse.walls or 
+        (col, row - 1) in warehouse.walls and (col + 1, row) in warehouse.walls or
+        (col, row + 1) in warehouse.walls and (col - 1, row) in warehouse.walls or
+        (col, row + 1) in warehouse.walls and (col + 1, row) in warehouse.walls)
+
+class WarehouseProblem(search.Problem):
+    def __init__(self, warehouse, initial):
+        self.warehouse = warehouse
+        self.initial = initial
+        self.explored = []
+        self.corners = []
+        self.worker = initial
+
+
+    def result(self, state, action):
+        assert action in self.actions(state)
+        new_state = tuple(map(sum, zip(state, action)))
+        if new_state not in self.explored: # If the cell is previously explored do nothing
+            self.explored.append(new_state) 
+            col, row = new_state
+            if ((col, row - 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or 
+                (col, row - 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls or
+                (col, row + 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or
+                (col, row + 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls):
+                self.corners.append(new_state)
+            
+        return new_state
+
+    def actions(self, state):
+        moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        possible_actions = []
+        for move in moves:
+            new_pos = tuple(map(sum, zip(state, move)))  # Calculate new position
+            if self.is_valid_move(new_pos):
+                possible_actions.append(move)
+        return possible_actions
+
+    def goal_test(self, state): # NO GOAL ONLY TRAVEL
+        return False
+
+    def is_valid_move(self, pos):
+        col, row = pos
+        return (1 <= row < self.warehouse.nrows and
+                1 <= col < self.warehouse.ncols and
+                (col, row) not in self.warehouse.walls)
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -44,107 +91,10 @@ def my_team():
     
     '''
     return [(10779566, 'Ryan','Hansen'), (10779710,'Cody', 'Overs')]
+    raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-class TouchingWalls:
-    def __init__(self,up = None, right = None, down = None, left = None):
-        self.walls = [up, right, down, left]
-        self.up = up
-        self.right = right
-        self.down = down
-        self.left = left
-
-    def __repr__(self) -> str:
-        return f"[{str(self.wall_1)}, {str(self.wall_2)}]"
-    
-class Corners:
-    def __init__(self, corner_pairs):
-        self.corner_pairs = corner_pairs
-        self.corners = self.get_corners()
-
-    def get_corners(self):
-        corners = []
-        for corner_pair in self.corner_pairs:
-            corners.append(corner_pair.corner_1)
-            corners.append(corner_pair.corner_2)
-        return corners
-    
-    def get_wall(self):
-        walls = []
-
-    
-
-class Corner:
-    def __init__(self, wall_1, wall_2):
-        self.wall_1 = wall_1
-        self.wall_2 = wall_2
-        diff = (wall_1[0] - wall_2[0], wall_1[1] - wall_2[1])
-        self.corner_1 = (wall_1[0] - diff[0], wall_1[1])
-        self.corner_2 = (wall_1[0], wall_1[1] - diff[1])
-
-    def __str__(self):
-        return f"[{str(self.wall_1)}, {str(self.wall_2)}], [{str(self.corner_1), str(self.corner_2)}]]"
-    
-    def __repr__(self) -> str:
-        return f"[{str(self.wall_1)}, {str(self.wall_2)} | {str(self.corner_1), str(self.corner_2)}]"
-
-def corner_comparator(wall_1, wall_2):
-    if 1 == abs(wall_1[0] - wall_2[0]) and 1 == abs(wall_1[1] - wall_2[1]):
-        return True
-    return False
-
-
-def possible_worker_positions(warehouse):
-        # Define movement offsets for up, down, left, and right
-        movements = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-
-        visited = set()
-        queue = deque([(warehouse.worker[0], warehouse.worker[1])])
-        possible_positions = set()
-
-        while queue:
-            x, y = queue.popleft()
-            if (x, y) in visited:
-                continue
-            visited.add((x, y))
-            possible_positions.add((x, y))
-            for dx, dy in movements:
-                new_x, new_y = x + dx, y + dy
-                # Check if the new position is within the bounds of the warehouse and not a wall
-                if (new_x, new_y) not in warehouse.walls and (new_x, new_y) not in visited:
-                    queue.append((new_x, new_y))
-
-        return possible_positions
-
-def get_corners(warehouse):
-    corner_pairs = []
-    for wall_1 in warehouse.walls:
-        for wall_2 in warehouse.walls:
-            if corner_comparator(wall_1, wall_2):
-                corner_pairs.append(Corner(wall_1, wall_2))
-    #print(corner_pairs)
-    corners = Corners(corner_pairs=corner_pairs)
-    return corners
-
-def display_taboo(warehouse, corners):
-    display_string = ''
-    for nrow in range(warehouse.nrows):
-        for ncol in range(warehouse.ncols):
-            if (ncol, nrow) in warehouse.walls:
-                display_string = display_string + "#"
-            elif (ncol, nrow) in corners.corners and (ncol, nrow) in possible_worker_positions(warehouse):
-                display_string = display_string + "X"
-            else:
-                display_string = display_string + " "
-        display_string = display_string + "\n"
-    return display_string
-
-def get_taboo_walls(warehouse, corners):
-    taboo_walls = []
-
-
-    return taboo_walls
 
 def taboo_cells(warehouse):
     '''  
@@ -170,15 +120,38 @@ def taboo_cells(warehouse):
        a '#' and the taboo cells marked with a 'X'.  
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
-       
     '''
     ##         "INSERT YOUR CODE HERE"
+    wh_problem = WarehouseProblem(warehouse, warehouse.worker)
+    search.breadth_first_graph_search(wh_problem)
+    print(wh_problem.corners)
+
+    corner_pairs = []
+    # Iterate through each corner
+    for i in range(len(wh_problem.corners)):
+        for j in range(i + 1, len(wh_problem.corners)):
+            corner1 = wh_problem.corners[i]
+            corner2 = wh_problem.corners[j]
+            if corner1[0] == corner2[0] or corner1[1] == corner2[1]:
+                corner_pairs.append((corner1, corner2))
+
+    print(corner_pairs)
+
     taboo = ''
-    corners = get_corners(warehouse)
-    print(corners.corners)
-    walls = get_taboo_walls(warehouse, corners)
-    taboo = display_taboo(warehouse, corners)
-    print(taboo)
+    for row in range(warehouse.nrows):
+        for col in range(warehouse.ncols):
+            if (col, row) in warehouse.walls:
+                taboo += '#'
+            elif (col, row) == warehouse.worker:
+                taboo += '@'
+ #           elif (col, row) in corner_pairs:
+  #              taboo += 'L'
+            elif (col, row) in wh_problem.explored: 
+                taboo += "."
+            else:
+                taboo += " "
+        taboo += "\n"
+
     return taboo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,28 +250,12 @@ def solve_weighted_sokoban(warehouse):
     raise NotImplementedError()
 
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
     wh.load_warehouse("./warehouses/warehouse_01.txt")
-    taboo_cells(wh)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    print(wh)
+    print('\n')
+    print(taboo_cells(wh))
 
-'''
-            elif x < 0 or x >= warehouse.ncols or y < 0 or y >= warehouse.nrows:
-                taboo += '&'  # Outer cell
-            else:
-                adjacent_walls = 0  # Reset adjacent walls count for each empty cell
-                for dx, dy in adjacent_positions:
-                    # Calculate the position of the adjacent cell
-                    adjacent_cell = (x + dx, y + dy)
-                    # Check if the adjacent cell is a wall by verifying if it's in the warehouse's list of walls
-                    if adjacent_cell in warehouse.walls:
-                        # If the adjacent cell is a wall, increment the adjacent_walls counter
-                        if adjacent_cell[0] >= 0 and adjacent_cell[1] >= 0:
-                            adjacent_walls += 1
-                        else:
-                            print("hello bitch")
-                            adjacent_walls -= 100
-                        
-                taboo += 'X' if adjacent_walls == 2 else ' '
-'''
