@@ -89,6 +89,7 @@ class WarehouseProblem(search.Problem):
 
 
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -242,16 +243,81 @@ class SokobanPuzzle(search.Problem):
 
     
     def __init__(self, warehouse):
-        raise NotImplementedError()
+        self.wh = warehouse.copy()
+        self.initial = tuple([tuple(warehouse.worker), tuple(warehouse.boxes)])
+
+        self.goal = tuple(warehouse.targets)
 
     def actions(self, state):
         """
         Return the list of actions that can be executed in the given state.
         
         """
-        raise NotImplementedError
+        L = []
+        #Up
+        all_moves = ["Up", "Right", "Down", "Left"]
+        for move in all_moves:
+            is_possible, new_wh = check_move_validity(self.wh, move, state)
+            if is_possible:
+                L.append(move)
+        return L
+    
+    def result(self, state, action):
+        next_state = list(state)
+        assert action in self.actions(state)
+        is_possible, next_state = check_move_validity(self.wh,action, state)
+        return next_state
+    
+    
+    def goal_test(self, state):
+        """Return True if the state is a goal."""
+        return set(state[1]) == set(self.goal)
+
+
+
+
+        
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def apply_state_to_warehouse(warehouse,state):
+    warehouse.worker = list(state[0])
+    warehouse.boxes = list(state[1])
+
+def check_move_validity(warehouse, action, state=None):
+        if state == None:
+            state = (tuple(warehouse.worker), tuple(warehouse.boxes))
+        warehouse_clone = warehouse.copy()
+        worker = list(state[0])
+        boxes = list(state[1])
+        new_box = None
+        match action:
+            case "Up":
+                diff = (0, -1)
+            case "Right":
+                diff = (1, 0)
+            case "Down":
+                diff = (0, 1)
+            case "Left":
+                diff = (-1, 0)
+            case _:
+                raise Exception(f"'{action}' does not match the available moves.")
+        worker = (worker[0] + diff[0], worker[1] + diff[1])
+        if worker in warehouse_clone.walls:
+            return False, None
+        if worker in boxes:
+            new_box = (worker[0] + diff[0], worker[1] + diff[1])
+            if new_box in boxes or new_box in warehouse_clone.walls:
+                return False, None
+            else:
+                moved_box_index = boxes.index(worker)
+                boxes[moved_box_index] = new_box
+
+        next_state = (tuple(worker), tuple(boxes))
+        return True, next_state
+
+            
+    
 
 def check_elem_action_seq(warehouse, action_seq):
     '''
@@ -278,11 +344,19 @@ def check_elem_action_seq(warehouse, action_seq):
     '''
     
     ##         "INSERT YOUR CODE HERE"
-    
-    raise NotImplementedError()
+    worker = warehouse.worker
+    wh = warehouse.copy()
+    for action in action_seq:
+        is_possible, state = check_move_validity(wh,action)
+        apply_state_to_warehouse(wh,state)
+        if not is_possible:
+            return 'Impossible'
+        
+    return str(wh)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 def solve_weighted_sokoban(warehouse):
     '''
@@ -305,18 +379,20 @@ def solve_weighted_sokoban(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
-
     '''
-    
-    raise NotImplementedError()
+    sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
+    f = search.breadth_first_graph_search(sokoban_puzzle)
+    return f.solution(), f.path_cost
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
-    print(wh)
-    print('\n')
-    print(taboo_cells(wh))
+    wh.load_warehouse("./warehouses/warehouse_00Custom1.txt")
+    print(solve_weighted_sokoban(wh))
+
+
+    #search.breadth_first_graph_search(sokoban_puzzle)
+
 
