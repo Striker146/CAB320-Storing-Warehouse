@@ -193,7 +193,8 @@ def taboo_cells(warehouse):
                 taboo += "X"
             else:
                 taboo += " "
-        taboo += "\n"
+        if warehouse.nrows - 1 != row:
+            taboo += "\n"
 
     return taboo
 
@@ -246,6 +247,7 @@ class SokobanPuzzle(search.Problem):
         self.initial = tuple([tuple(warehouse.worker), tuple(warehouse.boxes)])
         self.checked_moves = 0
         self.goal = tuple(warehouse.targets)
+        self.taboo_cells = get_taboo_cord(self.wh)
 
     def actions(self, state):
         """
@@ -257,7 +259,8 @@ class SokobanPuzzle(search.Problem):
         all_moves = ["Up", "Right", "Down", "Left"]
         for move in all_moves:
             is_possible, possible_state = check_move_validity(self.wh, move, state)
-            if is_possible:
+
+            if is_possible and not possible_state[1] in self.taboo_cells:
                 L.append(move)
         return L
     
@@ -452,7 +455,6 @@ if "__main__" == __name__:
     wh = sokoban.Warehouse()
     wh.load_warehouse("./warehouses/warehouse_00custom1.txt")
     print(solve_weighted_sokoban(wh))
-
 
     #search.breadth_first_graph_search(sokoban_puzzle)
 
