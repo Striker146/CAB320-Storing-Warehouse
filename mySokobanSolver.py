@@ -256,7 +256,7 @@ class SokobanPuzzle(search.Problem):
         #Up
         all_moves = ["Up", "Right", "Down", "Left"]
         for move in all_moves:
-            is_possible, new_wh = check_move_validity(self.wh, move, state)
+            is_possible, possible_state = check_move_validity(self.wh, move, state)
             if is_possible:
                 L.append(move)
         return L
