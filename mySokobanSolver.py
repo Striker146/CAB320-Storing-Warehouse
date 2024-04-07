@@ -197,8 +197,26 @@ def taboo_cells(warehouse):
 
     return taboo
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def calculate_manhattan_distance(pos1, pos2):
+    pos1 = list(pos1)
+    pos2 = list(pos2)
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
+def is_aligned(pos1, pos2):
+    if pos1[0] == pos2[0]:
+        return True
+    if pos1[1] == pos2[1]:
+        return True
+    return False
+
+class CostSet:
+    def __init__(self,item1,item2, weight=1):
+        self.item1 = item1
+        self.item2 = item2
+        self.weight = weight
+        self.cost = calculate_manhattan_distance(self.item1,self.item2) * weight
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -226,7 +244,7 @@ class SokobanPuzzle(search.Problem):
     def __init__(self, warehouse):
         self.wh = warehouse.copy()
         self.initial = tuple([tuple(warehouse.worker), tuple(warehouse.boxes)])
-
+        self.checked_moves = 0
         self.goal = tuple(warehouse.targets)
 
     def actions(self, state):
@@ -247,12 +265,74 @@ class SokobanPuzzle(search.Problem):
         next_state = list(state)
         assert action in self.actions(state)
         is_possible, next_state = check_move_validity(self.wh,action, state)
+        self.checked_moves += 1
+        apply_state_to_warehouse(self.wh, next_state)
         return next_state
     
     
     def goal_test(self, state):
         """Return True if the state is a goal."""
         return set(state[1]) == set(self.goal)
+    
+
+
+    
+
+    def h(self, node):
+        worker = list(node.state[0])
+        goals = list(self.goal)
+        boxes = list(node.state[1])
+        weights = list(self.wh.weights)
+        weighted_boxes = [[box, weight] for box,weight in zip(boxes,weights)]
+        weighted_boxes = sorted(weighted_boxes, key=lambda x : x[1], reverse=True) 
+
+
+        ordered_boxes = [weighted_box[0] for weighted_box in weighted_boxes]
+        available_goals = [x for x in goals if x not in ordered_boxes]
+        available_boxes = [x for x in weighted_boxes if x[0] not in goals]
+
+        if len(available_goals) == 0:
+            return 0
+
+        
+
+        player_costs = [CostSet(worker, weighted_box[0]) for weighted_box in available_boxes]
+        player_cost = min(player_costs, key=lambda x: x.cost)
+
+
+
+
+        final_cost_set = []
+        for weighted_box in available_boxes:
+            box_costs = [CostSet(goal, weighted_box[0], weighted_box[1]) for goal in available_goals]
+            best_cost = min(box_costs, key=lambda x: x.cost)
+            final_cost_set.append(best_cost)
+            available_goals.remove(best_cost.item1)
+        available_goals = list(self.goal)
+        cost = sum(map(lambda x: x.cost, final_cost_set)) + player_cost.cost
+        return cost
+
+
+    def path_cost(self, c, state1, action, state2):
+        """Return the cost of a solution path that arrives at state2 from
+        state1 via action, assuming cost c to get up to state1. If the problem
+        is such that the path doesn't matter, this function will only look at
+        state2.  If the path does matter, it will consider c and maybe state1
+        and action. The default method costs 1 for every step in the path."""
+        box_state1 = state1[1]
+        box_costs = self.wh.weights
+
+
+        box_state2 = state2[1]
+        push_cost = 0
+        for index, (first, second) in enumerate(zip(box_state1, box_state2)):
+            if first != second:
+                push_cost = box_costs[index]
+        return c + 1 + push_cost
+
+
+
+        
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -357,17 +437,21 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     '''
     sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
-    f = search.breadth_first_graph_search(sokoban_puzzle)
-    return f.solution(), f.path_cost
+    #f = search.breadth_first_graph_search(sokoban_puzzle)
+    f = search.astar_graph_search(sokoban_puzzle)
+    print(sokoban_puzzle.checked_moves)
+    if f == None:
+        return 'Impossible', None
+    else:
+        return f.solution(), f.path_cost
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
-#    test = solve_weighted_sokoban(wh)
-    print(taboo_cells(wh))
+    wh.load_warehouse("./warehouses/warehouse_00custom1.txt")
+    print(solve_weighted_sokoban(wh))
 
 
     #search.breadth_first_graph_search(sokoban_puzzle)
