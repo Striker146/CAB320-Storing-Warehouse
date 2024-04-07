@@ -404,10 +404,10 @@ def check_elem_action_seq(warehouse, action_seq):
     wh = warehouse.copy()
     for action in action_seq:
         is_possible, state = check_move_validity(wh,action)
-        apply_state_to_warehouse(wh,state)
+        
         if not is_possible:
             return 'Impossible'
-        
+        apply_state_to_warehouse(wh,state)
     return str(wh)
 
 
