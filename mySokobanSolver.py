@@ -451,7 +451,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
 
