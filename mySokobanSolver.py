@@ -347,7 +347,7 @@ def apply_state_to_warehouse(warehouse,state):
 def check_move_validity(warehouse, action, state=None):
         if state == None:
             state = (tuple(warehouse.worker), tuple(warehouse.boxes))
-        warehouse_clone = warehouse.copy()
+        #warehouse_clone = warehouse.copy()
         worker = list(state[0])
         boxes = list(state[1])
         new_box = None
@@ -363,11 +363,11 @@ def check_move_validity(warehouse, action, state=None):
             case _:
                 raise Exception(f"'{action}' does not match the available moves.")
         worker = (worker[0] + diff[0], worker[1] + diff[1])
-        if worker in warehouse_clone.walls:
+        if worker in warehouse.walls:
             return False, None
         if worker in boxes:
             new_box = (worker[0] + diff[0], worker[1] + diff[1])
-            if new_box in boxes or new_box in warehouse_clone.walls:
+            if new_box in boxes or new_box in warehouse.walls:
                 return False, None
             else:
                 moved_box_index = boxes.index(worker)
