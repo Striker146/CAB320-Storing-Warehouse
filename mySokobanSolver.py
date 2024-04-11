@@ -93,60 +93,33 @@ def my_team():
 
 def get_taboo_cord(warehouse):
     def find_corner_pairs(corners, warehouse):
-        corner_pairs = []
-
-        for row in range(len(corners)):
-            for col in range(row + 1, len(corners)):
-                corner1 = corners[row]
-                corner2 = corners[col]
-
-                # Check if there is a wall between the corners
-                if meets_taboo_conditions(corner1, corner2, warehouse):
-                    if (abs(corner1[0] - corner2[0]) > 1) or (abs(corner1[1] - corner2[1]) > 1):
-                        if corner1[0] == corner2[0]:
-                            corner_pairs.append((corner1, corner2))
-                        elif corner1[1] == corner2[1]:
-                            corner_pairs.append((corner1, corner2))
-
-        return corner_pairs
+        return [(corners[row], corners[col]) 
+                for row in range(len(corners)) 
+                for col in range(row + 1, len(corners)) 
+                if meets_taboo_conditions(corners[row], corners[col], warehouse) 
+                and ((abs(corners[row][0] - corners[col][0]) > 1) or (abs(corners[row][1] - corners[col][1]) > 1)) 
+                and (corners[row][0] == corners[col][0] or corners[row][1] == corners[col][1])]
 
     def meets_taboo_conditions(corner1, corner2, warehouse):
-        if corner1[0] == corner2[0]:  # Same column, check rows
-            min_row = min(corner1[1], corner2[1])
-            max_row = max(corner1[1], corner2[1])
-            for row in range(min_row + 1, max_row):
-                if ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls):
-                    return False
-        elif corner1[1] == corner2[1]:  # Same row, check columns
-            min_col = min(corner1[0], corner2[0])
-            max_col = max(corner1[0], corner2[0])
-            for col in range(min_col + 1, max_col):
-                if ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls):
-                    return False
-        return True
+        return all([
+            all([
+                ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls)
+                for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))
+            ]) if corner1[0] == corner2[0] else
+            all([
+                ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls)
+                for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))
+            ]) if corner1[1] == corner2[1] else
+            True
+        ])
     
     def coordinates_between_corners(corner1, corner2):
-        coordinates = []
-        
-        if corner1[0] == corner2[0]:  # Same column
-            min_row = min(corner1[1], corner2[1])
-            max_row = max(corner1[1], corner2[1])
-            for row in range(min_row + 1, max_row):
-                coordinates.append((corner1[0], row))
-        elif corner1[1] == corner2[1]:  # Same row
-            min_col = min(corner1[0], corner2[0])
-            max_col = max(corner1[0], corner2[0])
-            for col in range(min_col + 1, max_col):
-                coordinates.append((col, corner1[1]))
-        
-        return coordinates
+        return [(corner1[0], row) for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))] if corner1[0] == corner2[0] else \
+            [(col, corner1[1]) for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))] if corner1[1] == corner2[1] else \
+            []
     
     def return_taboo_walls(corner_pairs):
-        cells = []
-        for pair in corner_pairs:
-            cells += (coordinates_between_corners(pair[0], pair[1]))
-
-        return cells
+        return [cell for pair in corner_pairs for cell in coordinates_between_corners(pair[0], pair[1])]
 
     wh_problem = WarehouseProblem(warehouse, warehouse.worker)
     search.breadth_first_graph_search(wh_problem)
@@ -156,6 +129,7 @@ def get_taboo_cord(warehouse):
     taboo_walls = return_taboo_walls(corner_pairs)
 
     taboo_cells = wh_problem.corners + taboo_walls
+    
     return taboo_cells
 
 def taboo_cells(warehouse):
