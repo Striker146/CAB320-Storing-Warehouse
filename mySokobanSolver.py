@@ -86,7 +86,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-    return [(10779566, 'Ryan','Hansen'), (10779710,'Cody', 'Overs')]
+    return [(10779566, 'Ryan','Uchino-Hansen'), (10779710,'Cody', 'Overs')]
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -451,7 +451,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_07.txt")
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
 
