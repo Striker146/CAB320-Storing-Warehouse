@@ -31,6 +31,7 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # with these files
 import search 
 import sokoban
+import time
 
 class WarehouseProblem(search.Problem):
     def __init__(self, warehouse, initial):
@@ -260,7 +261,7 @@ class SokobanPuzzle(search.Problem):
         for move in all_moves:
             is_possible, possible_state = check_move_validity(self.wh, move, state)
 
-            if is_possible and not possible_state[1] in self.taboo_cells:
+            if is_possible and not any(item in possible_state[1] for item in self.taboo_cells):
                 L.append(move)
         return L
     
@@ -269,26 +270,19 @@ class SokobanPuzzle(search.Problem):
         assert action in self.actions(state)
         is_possible, next_state = check_move_validity(self.wh,action, state)
         self.checked_moves += 1
-        apply_state_to_warehouse(self.wh, next_state)
         return next_state
-    
-    
+     
     def goal_test(self, state):
         """Return True if the state is a goal."""
         return set(state[1]) == set(self.goal)
     
-
-
-    
-
-    def h(self, node):
+    def h2(self, node):
         worker = list(node.state[0])
         goals = list(self.goal)
         boxes = list(node.state[1])
         weights = list(self.wh.weights)
         weighted_boxes = [[box, weight] for box,weight in zip(boxes,weights)]
         weighted_boxes = sorted(weighted_boxes, key=lambda x : x[1], reverse=True) 
-
 
         ordered_boxes = [weighted_box[0] for weighted_box in weighted_boxes]
         available_goals = [x for x in goals if x not in ordered_boxes]
@@ -297,13 +291,8 @@ class SokobanPuzzle(search.Problem):
         if len(available_goals) == 0:
             return 0
 
-        
-
         player_costs = [CostSet(worker, weighted_box[0]) for weighted_box in available_boxes]
         player_cost = min(player_costs, key=lambda x: x.cost)
-
-
-
 
         final_cost_set = []
         for weighted_box in available_boxes:
@@ -314,8 +303,25 @@ class SokobanPuzzle(search.Problem):
         available_goals = list(self.goal)
         cost = sum(map(lambda x: x.cost, final_cost_set)) + player_cost.cost
         return cost
+    
+    def h(self, node):
+        _, box_positions = node.state
+        total_heuristic = 0
 
-
+        for box_pos in box_positions:
+            min_distance = float('inf')
+            
+            for target_pos in self.goal:
+                distance = calculate_manhattan_distance(box_pos, target_pos)
+                min_distance = min(min_distance, distance)
+            
+            if is_aligned(box_pos, target_pos):
+                min_distance -= 1
+            
+            total_heuristic += min_distance
+        
+        return total_heuristic
+    
     def path_cost(self, c, state1, action, state2):
         """Return the cost of a solution path that arrives at state2 from
         state1 via action, assuming cost c to get up to state1. If the problem
@@ -325,17 +331,12 @@ class SokobanPuzzle(search.Problem):
         box_state1 = state1[1]
         box_costs = self.wh.weights
 
-
         box_state2 = state2[1]
         push_cost = 0
         for index, (first, second) in enumerate(zip(box_state1, box_state2)):
             if first != second:
                 push_cost = box_costs[index]
         return c + 1 + push_cost
-
-
-
-        
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -374,9 +375,6 @@ def check_move_validity(warehouse, action, state=None):
 
         next_state = (tuple(worker), tuple(boxes))
         return True, next_state
-
-            
-    
 
 def check_elem_action_seq(warehouse, action_seq):
     '''
@@ -440,7 +438,7 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     '''
     sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
-    #f = search.breadth_first_graph_search(sokoban_puzzle)
+   # f = search.breadth_first_graph_search(sokoban_puzzle)
     f = search.astar_graph_search(sokoban_puzzle)
     print(sokoban_puzzle.checked_moves)
     if f == None:
@@ -453,8 +451,12 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_00custom1.txt")
+    wh.load_warehouse("./warehouses/warehouse_07.txt")
+    time_start = time.time()
     print(solve_weighted_sokoban(wh))
+
+    time_end = time.time()
+    print('runtime: ' + str(time_end - time_start))
 
     #search.breadth_first_graph_search(sokoban_puzzle)
 
