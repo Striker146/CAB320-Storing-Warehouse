@@ -308,11 +308,12 @@ class SokobanPuzzle(search.Problem):
         _, box_positions = node.state
         total_heuristic = 0
 
-        for box_pos in box_positions:
+        for (box_pos, box_weight) in zip(box_positions, self.wh.weights):
             min_distance = float('inf')
             
             for target_pos in self.goal:
-                distance = calculate_manhattan_distance(box_pos, target_pos)
+                
+                distance = calculate_manhattan_distance(box_pos, target_pos) * box_weight
                 min_distance = min(min_distance, distance)
             
             if is_aligned(box_pos, target_pos):
