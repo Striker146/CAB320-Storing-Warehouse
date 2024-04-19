@@ -42,6 +42,16 @@ class WarehouseProblem(search.Problem):
         self.worker = initial
 
     def result(self, state, action):
+        """
+        Creates a new state from an applied action to a given state
+
+        @param:
+            state: The current state.
+            action: The action to be applied.
+
+        @return:
+            tuple: The new state after applying the action.
+        """
         assert action in self.actions(state)
         new_state = tuple(map(sum, zip(state, action)))
         if new_state not in self.explored: # If the cell is previously explored do nothing
@@ -53,6 +63,15 @@ class WarehouseProblem(search.Problem):
         return new_state
 
     def actions(self, state):
+        """
+        Generates all possible actions from the current state.
+
+        @param:
+            state: The current state.
+
+        @return:
+            list: A list of possible actions.
+        """
         moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         possible_actions = []
         for move in moves:
@@ -61,10 +80,28 @@ class WarehouseProblem(search.Problem):
                 possible_actions.append(move)
         return possible_actions
 
-    def goal_test(self, state): # NO GOAL ONLY TRAVEL
+    def goal_test(self, state): # NO GOAL THEREFORE ALWAYS FALSE
+        """
+        Checks if the current state results in the goal condition.
+
+        @param:
+            state: The current state.
+
+        @return:
+            bool: True if the goal is satisfied, False otherwise.
+        """
         return False
 
     def is_valid_move(self, pos):
+        """
+        Checks if a given position is a valid move.
+
+        @param:
+            pos: The position to check.
+
+        @return:
+            bool: True if the move is valid, False otherwise.
+        """
         col, row = pos
         return (1 <= row < self.warehouse.nrows and
                 1 <= col < self.warehouse.ncols and
@@ -72,10 +109,12 @@ class WarehouseProblem(search.Problem):
     
     def is_corner(self, state):
         col, row = state
-        return ((col, row - 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or 
-            (col, row - 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls or
-            (col, row + 1) in self.warehouse.walls and (col - 1, row) in self.warehouse.walls or
-            (col, row + 1) in self.warehouse.walls and (col + 1, row) in self.warehouse.walls)
+        walls = self.warehouse.walls
+        return ((col, row - 1) in walls and (col - 1, row) in walls or
+                (col, row - 1) in walls and (col + 1, row) in walls or
+                (col, row + 1) in walls and (col - 1, row) in walls or
+                (col, row + 1) in walls and (col + 1, row) in walls)
+
     
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -92,61 +131,83 @@ def my_team():
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def get_taboo_cord(warehouse):
+    """
+    Parent function to return a list of all cells that meet the taboo rules
+
+    @param:
+        warehouse: An object representing the warehouse layout.
+
+    @returns:
+        list: A list of taboo cells, including corners and taboo walls.
+    """
     def find_corner_pairs(corners, warehouse):
-        corner_pairs = []
+        """
+        Finds pairs of corners that satisfy certain conditions (col, row).
 
-        for row in range(len(corners)):
-            for col in range(row + 1, len(corners)):
-                corner1 = corners[row]
-                corner2 = corners[col]
+        @param:
+            corners (list): A list of corner coordinates.
+            warehouse: Intial warehouse layout.
 
-                # Check if there is a wall between the corners
-                if meets_taboo_conditions(corner1, corner2, warehouse):
-                    if (abs(corner1[0] - corner2[0]) > 1) or (abs(corner1[1] - corner2[1]) > 1):
-                        if corner1[0] == corner2[0]:
-                            corner_pairs.append((corner1, corner2))
-                        elif corner1[1] == corner2[1]:
-                            corner_pairs.append((corner1, corner2))
-
-        return corner_pairs
+        @return:
+            list: A list of pairs of corner coordinates that satisfy the conditions.
+        """
+        return [(corners[row], corners[col]) 
+                for row in range(len(corners)) 
+                for col in range(row + 1, len(corners)) 
+                if meets_taboo_conditions(corners[row], corners[col], warehouse) 
+                and ((abs(corners[row][0] - corners[col][0]) > 1) or (abs(corners[row][1] - corners[col][1]) > 1)) 
+                and (corners[row][0] == corners[col][0] or corners[row][1] == corners[col][1])]
 
     def meets_taboo_conditions(corner1, corner2, warehouse):
-        if corner1[0] == corner2[0]:  # Same column, check rows
-            min_row = min(corner1[1], corner2[1])
-            max_row = max(corner1[1], corner2[1])
-            for row in range(min_row + 1, max_row):
-                if ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls):
-                    return False
-        elif corner1[1] == corner2[1]:  # Same row, check columns
-            min_col = min(corner1[0], corner2[0])
-            max_col = max(corner1[0], corner2[0])
-            for col in range(min_col + 1, max_col):
-                if ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls):
-                    return False
-        return True
+        """
+        Checks if there are any taboo cells between two corners in a warehouse.
+
+        @param:
+            corner1: The first corner coordinate.
+            corner2: The second corner coordinate.
+            warehouse: Intial warehouse layout.
+
+        @return:
+            bool: True if there are no taboo conditions between the corners, False otherwise.
+        """
+        return all([
+            all([
+                ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls)
+                for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))
+            ]) if corner1[0] == corner2[0] else
+            all([
+                ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls)
+                for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))
+            ]) if corner1[1] == corner2[1] else
+            True
+        ])
     
     def coordinates_between_corners(corner1, corner2):
-        coordinates = []
-        
-        if corner1[0] == corner2[0]:  # Same column
-            min_row = min(corner1[1], corner2[1])
-            max_row = max(corner1[1], corner2[1])
-            for row in range(min_row + 1, max_row):
-                coordinates.append((corner1[0], row))
-        elif corner1[1] == corner2[1]:  # Same row
-            min_col = min(corner1[0], corner2[0])
-            max_col = max(corner1[0], corner2[0])
-            for col in range(min_col + 1, max_col):
-                coordinates.append((col, corner1[1]))
-        
-        return coordinates
+        """
+        Generates coordinates between two corners along a row or column.
+
+        @param:
+            corner1: The first corner coordinate.
+            corner2: The second corner coordinate.
+
+        @return:
+            list: A list of coordinates between the corners, forming a straight line along a row or column.
+        """
+        return [(corner1[0], row) for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))] if corner1[0] == corner2[0] else \
+            [(col, corner1[1]) for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))] if corner1[1] == corner2[1] else \
+            []
     
     def return_taboo_walls(corner_pairs):
-        cells = []
-        for pair in corner_pairs:
-            cells += (coordinates_between_corners(pair[0], pair[1]))
+        """
+        Generates a list of taboo walls based on pairs of corners.
 
-        return cells
+        @param:
+            corner_pairs: A list of pairs of corner coordinates.
+
+        @returns:
+            list: A list of coordinates representing taboo walls between the given corner pairs.
+        """
+        return [cell for pair in corner_pairs for cell in coordinates_between_corners(pair[0], pair[1])]
 
     wh_problem = WarehouseProblem(warehouse, warehouse.worker)
     search.breadth_first_graph_search(wh_problem)
@@ -156,6 +217,7 @@ def get_taboo_cord(warehouse):
     taboo_walls = return_taboo_walls(corner_pairs)
 
     taboo_cells = wh_problem.corners + taboo_walls
+    
     return taboo_cells
 
 def taboo_cells(warehouse):
@@ -452,12 +514,15 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_5n.txt")
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
+
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
 
     time_end = time.time()
     print('runtime: ' + str(time_end - time_start))
+
+
 
     #search.breadth_first_graph_search(sokoban_puzzle)
 
