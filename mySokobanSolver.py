@@ -313,7 +313,7 @@ class SokobanPuzzle(search.Problem):
             
             for target_pos in self.goal:
                 
-                distance = calculate_manhattan_distance(box_pos, target_pos) * box_weight
+                distance = calculate_manhattan_distance(box_pos, target_pos) * (box_weight + 1)
                 min_distance = min(min_distance, distance)
             
             if is_aligned(box_pos, target_pos):
@@ -439,7 +439,7 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     '''
     sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
-   # f = search.breadth_first_graph_search(sokoban_puzzle)
+    #f = search.breadth_first_graph_search(sokoban_puzzle)
     f = search.astar_graph_search(sokoban_puzzle)
     print(sokoban_puzzle.checked_moves)
     if f == None:
@@ -452,7 +452,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    wh.load_warehouse("./warehouses/warehouse_5n.txt")
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
 
