@@ -423,10 +423,12 @@ def best_first_graph_search(problem, f):
     explored = set() # set of states
     while frontier:
         node = frontier.pop()
-        apply_state_to_warehouse(problem.wh, node.state)
+        #"""
+        #apply_state_to_warehouse(problem.wh, node.state)
+        #print(problem.wh)
+        #sleep(0.5)
+        #"""
 
-        print(problem.wh)
-        sleep(0.5)
         if problem.goal_test(node.state):
             return node
         explored.add(node.state)
