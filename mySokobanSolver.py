@@ -135,7 +135,7 @@ def get_taboo_cord(warehouse):
     Parent function to return a list of all cells that meet the taboo rules
 
     @param:
-        warehouse: An object representing the warehouse layout.
+        warehouse: Intial warehouse layout.
 
     @returns:
         list: A list of taboo cells, including corners and taboo walls.
@@ -170,17 +170,19 @@ def get_taboo_cord(warehouse):
         @return:
             bool: True if there are no taboo conditions between the corners, False otherwise.
         """
-        return all([
-            all([
-                ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls)
-                for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))
-            ]) if corner1[0] == corner2[0] else
-            all([
-                ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls)
-                for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))
-            ]) if corner1[1] == corner2[1] else
-            True
-        ])
+        if corner1[0] == corner2[0]:  # Same column, check rows
+            min_row = min(corner1[1], corner2[1])
+            max_row = max(corner1[1], corner2[1])
+            for row in range(min_row + 1, max_row):
+                if ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls):
+                    return False
+        elif corner1[1] == corner2[1]:  # Same row, check columns
+            min_col = min(corner1[0], corner2[0])
+            max_col = max(corner1[0], corner2[0])
+            for col in range(min_col + 1, max_col):
+                if ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls):
+                    return False
+        return True
     
     def coordinates_between_corners(corner1, corner2):
         """
@@ -218,7 +220,7 @@ def get_taboo_cord(warehouse):
 
     taboo_cells = wh_problem.corners + taboo_walls
     
-    return taboo_cells
+    return wh_problem.corners
 
 def taboo_cells(warehouse):
     '''  
