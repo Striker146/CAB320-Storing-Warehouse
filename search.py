@@ -32,6 +32,7 @@ assert sys.version_info >= (3, 5)
 import itertools
 import functools
 import heapq
+from time import sleep
 
 import collections # for dequeue
 
@@ -162,6 +163,23 @@ class PriorityQueue:
         except ValueError:
             raise KeyError(str(key) + " is not in the priority queue")
         heapq.heapify(self.heap)
+
+
+def apply_state_to_warehouse(warehouse,state):
+    """
+    applies the state to the warehouse code.
+    Used mostly for when printing to terminal.
+
+    @param:
+    warehouse: a warehouse to have the state applied to
+    state: a state which will be applied to the warehouse
+    
+    @return:
+    None
+
+    """
+    warehouse.worker = list(state[0])
+    warehouse.boxes = list(state[1])
 
 
 #______________________________________________________________________________
@@ -405,6 +423,10 @@ def best_first_graph_search(problem, f):
     explored = set() # set of states
     while frontier:
         node = frontier.pop()
+        apply_state_to_warehouse(problem.wh, node.state)
+
+        print(problem.wh)
+        sleep(0.5)
         if problem.goal_test(node.state):
             return node
         explored.add(node.state)

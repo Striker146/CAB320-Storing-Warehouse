@@ -564,8 +564,8 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
-
+    wh.load_warehouse("./warehouses/warehouse_00custom4.txt")
+    print(taboo_cells(wh))
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
 
