@@ -220,7 +220,7 @@ def get_taboo_cord(warehouse):
 
     taboo_cells = wh_problem.corners + taboo_walls
     
-    return wh_problem.corners
+    return taboo_cells
 
 def taboo_cells(warehouse):
     '''  
