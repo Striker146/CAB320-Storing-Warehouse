@@ -279,6 +279,8 @@ def calculate_manhattan_distance(pos1, pos2):
     """
     pos1 = list(pos1)
     pos2 = list(pos2)
+
+    "Manhattan distance equation"
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 def is_aligned(pos1, pos2):
@@ -341,6 +343,7 @@ class SokobanPuzzle(search.Problem):
         @return:
         list: All of the valid moves with the given state
         """
+        "Blank list of all possible moves"
         L = []
         #Up
         all_moves = ["Up", "Right", "Down", "Left"]
@@ -348,6 +351,7 @@ class SokobanPuzzle(search.Problem):
             is_possible, possible_state = check_move_validity(self.wh, move, state)
 
             if is_possible and not any(item in possible_state[1] for item in self.taboo_cells):
+                "Adds the available move to list"
                 L.append(move)
         return L
     
@@ -397,7 +401,7 @@ class SokobanPuzzle(search.Problem):
         @return:
         int: The heuristic value
         """
-        _, box_positions = node.state
+        player_position, box_positions = node.state
         total_heuristic = 0
 
         for (box_pos, box_weight) in zip(box_positions, self.wh.weights):
@@ -410,8 +414,11 @@ class SokobanPuzzle(search.Problem):
             
             if is_aligned(box_pos, target_pos):
                 min_distance -= 1
-            
+            "Finds the most minimum of all boxes to targets"
             total_heuristic += min_distance
+
+        total_heuristic += min_distance
+
         
         return total_heuristic
     
@@ -426,6 +433,7 @@ class SokobanPuzzle(search.Problem):
 
         box_state2 = state2[1]
         push_cost = 0
+        """Links the movement of the boxes to check for moved state"""
         for index, (first, second) in enumerate(zip(box_state1, box_state2)):
             if first != second:
                 push_cost = box_costs[index]
@@ -466,9 +474,11 @@ def check_move_validity(warehouse, action, state=None):
         if state == None:
             state = (tuple(warehouse.worker), tuple(warehouse.boxes))
         #warehouse_clone = warehouse.copy()
+        "Converts to iterable state"
         worker = list(state[0])
         boxes = list(state[1])
         new_box = None
+        """Extracts the action into the difference of the movement in x-y"""
         match action:
             case "Up":
                 diff = (0, -1)
