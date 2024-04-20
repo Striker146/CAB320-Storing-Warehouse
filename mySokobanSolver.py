@@ -417,8 +417,6 @@ class SokobanPuzzle(search.Problem):
             "Finds the most minimum of all boxes to targets"
             total_heuristic += min_distance
 
-        total_heuristic += min_distance
-
         
         return total_heuristic
     
