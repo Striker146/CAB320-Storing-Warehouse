@@ -565,7 +565,6 @@ def solve_weighted_sokoban(warehouse):
     sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
     #f = search.breadth_first_graph_search(sokoban_puzzle)
     f = search.astar_graph_search(sokoban_puzzle)
-    print(sokoban_puzzle.checked_moves)
     if f == None:
         return 'Impossible', None
     else:
@@ -576,7 +575,7 @@ def solve_weighted_sokoban(warehouse):
 
 if "__main__" == __name__:
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    wh.load_warehouse("./warehouses/warehouse_47.txt")
     print(taboo_cells(wh))
     time_start = time.time()
     print(solve_weighted_sokoban(wh))
