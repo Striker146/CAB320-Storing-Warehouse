@@ -264,23 +264,37 @@ def taboo_cells(warehouse):
     return taboo
 
 def calculate_manhattan_distance(pos1, pos2):
+    """
+    Calcualte the manhattan distance between two points
+
+    @param:
+    pos1: first point
+    pos2: second point
+
+    @return:
+    int: returns the manhattan distance
+    """
     pos1 = list(pos1)
     pos2 = list(pos2)
     return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 def is_aligned(pos1, pos2):
+    """
+    Gets if two poistions are aligned horizontally or vertically
+
+    @param:
+    pos1: first point
+    pos2: second point
+
+    @return:
+    bool: true if aligned, else false
+    """
     if pos1[0] == pos2[0]:
         return True
     if pos1[1] == pos2[1]:
         return True
     return False
 
-class CostSet:
-    def __init__(self,item1,item2, weight=1):
-        self.item1 = item1
-        self.item2 = item2
-        self.weight = weight
-        self.cost = calculate_manhattan_distance(self.item1,self.item2) * weight
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -318,6 +332,11 @@ class SokobanPuzzle(search.Problem):
         """
         Return the list of actions that can be executed in the given state.
         
+        @param:
+        state: the current state
+
+        @return:
+        list: All of the valid moves with the given state
         """
         L = []
         #Up
@@ -329,46 +348,52 @@ class SokobanPuzzle(search.Problem):
                 L.append(move)
         return L
     
+
     def result(self, state, action):
+        """
+        Gets the next state from a given action
+
+        @param:
+        state: current state
+        action: the action of the worker
+
+        @return:
+        tuple: the next state of the given state with the action
+        """
         next_state = list(state)
         assert action in self.actions(state)
         is_possible, next_state = check_move_validity(self.wh,action, state)
         self.checked_moves += 1
         return next_state
      
+
     def goal_test(self, state):
-        """Return True if the state is a goal."""
+        """
+        checks if the boxes are on the targets
+        
+        @param:
+        state: The state of the warehouse.
+
+        @return:
+        bool: true if all boxes are on top of goals, else returns false.
+        """
         return set(state[1]) == set(self.goal)
     
-    def h2(self, node):
-        worker = list(node.state[0])
-        goals = list(self.goal)
-        boxes = list(node.state[1])
-        weights = list(self.wh.weights)
-        weighted_boxes = [[box, weight] for box,weight in zip(boxes,weights)]
-        weighted_boxes = sorted(weighted_boxes, key=lambda x : x[1], reverse=True) 
 
-        ordered_boxes = [weighted_box[0] for weighted_box in weighted_boxes]
-        available_goals = [x for x in goals if x not in ordered_boxes]
-        available_boxes = [x for x in weighted_boxes if x[0] not in goals]
-
-        if len(available_goals) == 0:
-            return 0
-
-        player_costs = [CostSet(worker, weighted_box[0]) for weighted_box in available_boxes]
-        player_cost = min(player_costs, key=lambda x: x.cost)
-
-        final_cost_set = []
-        for weighted_box in available_boxes:
-            box_costs = [CostSet(goal, weighted_box[0], weighted_box[1]) for goal in available_goals]
-            best_cost = min(box_costs, key=lambda x: x.cost)
-            final_cost_set.append(best_cost)
-            available_goals.remove(best_cost.item1)
-        available_goals = list(self.goal)
-        cost = sum(map(lambda x: x.cost, final_cost_set)) + player_cost.cost
-        return cost
-    
     def h(self, node):
+        """
+        Returns the heuristic of the SokobanProblem. This heuristic calculates
+        all of the distances between a box to a target and takes the most minimum
+        distance per box. This considers only the closest box to a target so that
+        the heuristic remains admissable. The cost of all of the box distances are 
+        added together and returned
+
+        @param:
+        node: the current node in the frontier
+
+        @return:
+        int: The heuristic value
+        """
         _, box_positions = node.state
         total_heuristic = 0
 
@@ -377,7 +402,7 @@ class SokobanPuzzle(search.Problem):
             
             for target_pos in self.goal:
                 
-                distance = calculate_manhattan_distance(box_pos, target_pos) * box_weight
+                distance = calculate_manhattan_distance(box_pos, target_pos) * (box_weight + 1)
                 min_distance = min(min_distance, distance)
             
             if is_aligned(box_pos, target_pos):
@@ -406,10 +431,35 @@ class SokobanPuzzle(search.Problem):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def apply_state_to_warehouse(warehouse,state):
+    """
+    applies the state to the warehouse code.
+    Used mostly for when printing to terminal.
+
+    @param:
+    warehouse: a warehouse to have the state applied to
+    state: a state which will be applied to the warehouse
+    
+    @return:
+    None
+
+    """
     warehouse.worker = list(state[0])
     warehouse.boxes = list(state[1])
 
+
+
 def check_move_validity(warehouse, action, state=None):
+        """
+        Checks if the move is available
+
+        @param:
+        action: the action being taken
+        state=None: the state being checked
+
+        @return:
+        bool: true if the move is valid, else false
+        tuple: the next state that results from the action, None if not possible.
+        """
         if state == None:
             state = (tuple(warehouse.worker), tuple(warehouse.boxes))
         #warehouse_clone = warehouse.copy()
@@ -503,7 +553,7 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     '''
     sokoban_puzzle = SokobanPuzzle(warehouse=warehouse)
-   # f = search.breadth_first_graph_search(sokoban_puzzle)
+    #f = search.breadth_first_graph_search(sokoban_puzzle)
     f = search.astar_graph_search(sokoban_puzzle)
     print(sokoban_puzzle.checked_moves)
     if f == None:
