@@ -154,9 +154,9 @@ def get_taboo_cord(warehouse):
         return [(corners[row], corners[col]) 
                 for row in range(len(corners)) 
                 for col in range(row + 1, len(corners)) 
-                if meets_taboo_conditions(corners[row], corners[col], warehouse) 
-                and ((abs(corners[row][0] - corners[col][0]) > 1) or (abs(corners[row][1] - corners[col][1]) > 1)) 
-                and (corners[row][0] == corners[col][0] or corners[row][1] == corners[col][1])]
+                if meets_taboo_conditions(corners[row], corners[col], warehouse) # determines if each cell is or is not a taboo cell
+                and ((abs(corners[row][0] - corners[col][0]) > 1) or (abs(corners[row][1] - corners[col][1]) > 1))  # checks if there are no adjacent corners
+                and (corners[row][0] == corners[col][0] or corners[row][1] == corners[col][1])] # checks if the corners are aligned horizonatlly or vertically
 
     def meets_taboo_conditions(corner1, corner2, warehouse):
         """
@@ -174,12 +174,14 @@ def get_taboo_cord(warehouse):
             min_row = min(corner1[1], corner2[1])
             max_row = max(corner1[1], corner2[1])
             for row in range(min_row + 1, max_row):
+                # Check if there's a wall or target cell in the way, or if there's no wall on adjacent cells
                 if ((corner1[0], row) in warehouse.walls or (corner1[0], row) in warehouse.targets) or not ((corner1[0] - 1, row) in warehouse.walls or (corner1[0] + 1, row) in warehouse.walls):
                     return False
         elif corner1[1] == corner2[1]:  # Same row, check columns
             min_col = min(corner1[0], corner2[0])
             max_col = max(corner1[0], corner2[0])
             for col in range(min_col + 1, max_col):
+                # Check if there's a wall or target cell in the way, or if there's no wall on adjacent cells
                 if ((col, corner1[1]) in warehouse.walls or (col, corner1[1]) in warehouse.targets) or not ((col, corner1[1] - 1) in warehouse.walls or (col, corner1[1] + 1) in warehouse.walls):
                     return False
         return True
@@ -195,6 +197,7 @@ def get_taboo_cord(warehouse):
         @return:
             list: A list of coordinates between the corners, forming a straight line along a row or column.
         """
+        # If corners are aligned vertically, return the cells between them on the same column, otherwise corners are aligned horizontally, return the cells between them on the same row
         return [(corner1[0], row) for row in range(min(corner1[1], corner2[1]) + 1, max(corner1[1], corner2[1]))] if corner1[0] == corner2[0] else \
             [(col, corner1[1]) for col in range(min(corner1[0], corner2[0]) + 1, max(corner1[0], corner2[0]))] if corner1[1] == corner2[1] else \
             []
@@ -212,7 +215,7 @@ def get_taboo_cord(warehouse):
         return [cell for pair in corner_pairs for cell in coordinates_between_corners(pair[0], pair[1])]
 
     wh_problem = WarehouseProblem(warehouse, warehouse.worker)
-    search.breadth_first_graph_search(wh_problem)
+    search.breadth_first_graph_search(wh_problem) # populates the 'explored' and 'corners' objects
 
     corner_pairs = find_corner_pairs(wh_problem.corners, warehouse)
 
